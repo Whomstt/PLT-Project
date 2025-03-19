@@ -1,0 +1,6 @@
+if (x == 10) {
+    return y + 5;
+    z = "Hello, World!";
+    while (a < b) { a = a * 2; }
+    unknown_char = '@';
+}
