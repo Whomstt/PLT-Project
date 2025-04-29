@@ -4,23 +4,28 @@
 
 %option noyywrap
 
-KEYWORD     "if"|"else"|"while"|"return"
-IDENTIFIER  [a-zA-Z_][a-zA-Z0-9_]*
-CONSTANT    [0-9]+
-LITERAL     \"([^\\\"]|\\.)*\"
-OPERATOR    (\+|\-|\*|\/|==|=|<=|>=|<|>|!)
-PUNCTUATOR  [\(\)\{\}\[\];,\.]
-WHITESPACE  [ \t\r\n]+
+KEYWORD      "if"|"else"|"while"|"return"|"void"|"int"|"float"|"char"|"main"
+IDENTIFIER   [a-zA-Z_][a-zA-Z0-9_]*
+CONSTANT     [0-9]+
+FLOAT        [0-9]+\.[0-9]+
+LITERAL      \"([^\\\"]|\\.)*\" 
+ARITHMETIC_OPERATOR (\+|\-|\*|\/|=)
+SPECIAL_OPERATOR [\(\)\{\}\[\];,\.]
+COMMENT      \/\/.*|\/\*[^*]*\*+([^/*][^*]*\*+)*\/
+WHITESPACE   [ \t\r\n]+
 
 %%
-{KEYWORD}      { printf("Keyword: %s\n", yytext); }
-{IDENTIFIER}   { printf("Identifier: %s\n", yytext); }
-{CONSTANT}     { printf("Constant: %s\n", yytext); }
-{LITERAL}      { printf("Literal: %s\n", yytext); }
-{OPERATOR}     { printf("Operator: %s\n", yytext); }
-{PUNCTUATOR}   { printf("Punctuator: %s\n", yytext); }
-{WHITESPACE}   { /* Ignore whitespace */ }
-.              { printf("Special character: %s\n", yytext); }
+
+{KEYWORD}             { printf("%s Reserved Keyword\n", yytext); }
+{IDENTIFIER}          { printf("%s Identifier\n", yytext); }
+{FLOAT}               { printf("%s Floating Number\n", yytext); }
+{CONSTANT}            { printf("%s Constant\n", yytext); }
+{LITERAL}             { printf("%s Literal\n", yytext); }
+{ARITHMETIC_OPERATOR} { printf("%s Arithmetic Operator\n", yytext); }
+{SPECIAL_OPERATOR}    { printf("%s Special Operator\n", yytext); }
+{COMMENT}             { /* Ignore comments */ }
+{WHITESPACE}          { /* Ignore whitespace */ }
+.                     { printf("%s Unknown character\n", yytext); }
 
 %%
 

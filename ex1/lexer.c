@@ -33,8 +33,19 @@ void lexer(const char* input) {
     int length = strlen(input);
     char buffer[256];
     int buffer_index = 0;
+    int in_comment_block = 0;
 
     for(int i = 0; i < length; i++) {
+        if(!in_comment_block && input[i] == '/' && input[i+1] == '/') {
+            break;
+        }
+
+        if (input[i] == '/' && input[i+1] == '*') {
+            in_comment_block = 1;
+            i++;
+            continue;
+        } 
+
         if(isspace(input[i])) {
             continue;
         }
@@ -74,7 +85,7 @@ void lexer(const char* input) {
             }
             buffer[buffer_index] = '\0';
             if (input[i] == '"') {
-                printf("String Literal: %s\n", buffer);
+                printf("Literal: %s\n", buffer);
             }
         }
 
@@ -92,19 +103,24 @@ void lexer(const char* input) {
     }
 }
 
-int main() {
-    char filename[] = "input.txt";
-    FILE* file = fopen(filename, "r");
-    if(file == NULL) {
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        printf("Usage: %s <filename>\n", argv[0]);
+        return 1;
+    }
+
+    FILE* file = fopen(argv[1], "r");
+    if (!file) {
         perror("Error opening file");
         return 1;
     }
 
     char line[MAX_LINE_LENGTH];
-    while(fgets(line, sizeof(line), file)) {
-        line[strcspn(line, "\n")] = 0; // Remove newline character if present
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\n")] = 0; // Remove newline character
         lexer(line);
     }
+
     fclose(file);
     return 0;
 }

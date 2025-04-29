@@ -1,6 +1,4 @@
-if (x == 10) {
-    return y + 5;
-    z = "Hello, World!";
-    while (a < b) { a = a * 2; }
-    unknown_char = '@';
+void main(){
+// hello world
+int a = 7, b = 7.35;
 }
