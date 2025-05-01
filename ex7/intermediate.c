@@ -15,185 +15,113 @@ typedef enum {
 // Token structure
 typedef struct {
     TokenType type;
-    char value[20];
+    char value[32];
 } Token;
 
 // Function prototypes
-void tokenize(const char* expression, Token* tokens, int* token_count);
-void parse_and_generate_tac(Token* tokens, int token_count);
+static void tokenize(const char *expr, Token *tokens, int *count);
+static void generate_tac(Token *tokens, int count);
+static int precedence(char op);
 
-int main() {
-    char expression[100];
-    Token tokens[100];
+int main(void) {
+    char input[256];
+    Token tokens[128];
     int token_count = 0;
-    
+
     printf("Enter an expression (e.g., x = a + b * c - d / e + f): ");
-    fgets(expression, sizeof(expression), stdin);
-    
-    // Remove newline character if present
-    expression[strcspn(expression, "\n")] = 0;
-    
-    // Tokenize the expression
-    tokenize(expression, tokens, &token_count);
-    
-    // Generate TAC
-    printf("\nThree-Address Code (TAC):\n");
-    parse_and_generate_tac(tokens, token_count);
-    
-    return 0;
-}
-
-void tokenize(const char* expression, Token* tokens, int* token_count) {
-    int i = 0;
-    int token_index = 0;
-    
-    while (expression[i] != '\0') {
-        // Skip whitespace
-        if (isspace(expression[i])) {
-            i++;
-            continue;
-        }
-        
-        // Check for operators
-        if (expression[i] == '+' || expression[i] == '-' || 
-            expression[i] == '*' || expression[i] == '/') {
-            tokens[token_index].type = TOKEN_OPERATOR;
-            tokens[token_index].value[0] = expression[i];
-            tokens[token_index].value[1] = '\0';
-            token_index++;
-            i++;
-            continue;
-        }
-        
-        // Check for equals
-        if (expression[i] == '=') {
-            tokens[token_index].type = TOKEN_EQUALS;
-            tokens[token_index].value[0] = '=';
-            tokens[token_index].value[1] = '\0';
-            token_index++;
-            i++;
-            continue;
-        }
-        
-        // Check for variables or numbers
-        if (isalnum(expression[i])) {
-            int j = 0;
-            while (isalnum(expression[i])) {
-                tokens[token_index].value[j++] = expression[i++];
-            }
-            tokens[token_index].value[j] = '\0';
-            
-            // Determine if it's a variable or number
-            if (isdigit(tokens[token_index].value[0])) {
-                tokens[token_index].type = TOKEN_NUMBER;
-            } else {
-                tokens[token_index].type = TOKEN_VARIABLE;
-            }
-            
-            token_index++;
-            continue;
-        }
-        
-        // Skip unknown characters
-        i++;
+    if (!fgets(input, sizeof(input), stdin)) {
+        fprintf(stderr, "Error reading input\n");
+        return EXIT_FAILURE;
     }
-    
-    // Add end token
-    tokens[token_index].type = TOKEN_END;
-    tokens[token_index].value[0] = '\0';
-    *token_count = token_index;
+    input[strcspn(input, "\n")] = '\0';  // strip newline
+
+    tokenize(input, tokens, &token_count);
+
+    printf("\nThree-Address Code (TAC):\n");
+    generate_tac(tokens, token_count);
+
+    return EXIT_SUCCESS;
 }
 
-// Helper function to check operator precedence
-int get_precedence(char op) {
-    if (op == '*' || op == '/') return 2;
-    if (op == '+' || op == '-') return 1;
-    return 0;
+// Split input into tokens
+static void tokenize(const char *expr, Token *tokens, int *count) {
+    int i = 0, idx = 0;
+    while (expr[i]) {
+        if (isspace(expr[i])) { i++; continue; }
+
+        if (strchr("+-*/", expr[i])) {
+            tokens[idx].type = TOKEN_OPERATOR;
+            tokens[idx].value[0] = expr[i++];
+            tokens[idx].value[1] = '\0';
+        }
+        else if (expr[i] == '=') {
+            tokens[idx].type = TOKEN_EQUALS;
+            tokens[idx].value[0] = expr[i++];
+            tokens[idx].value[1] = '\0';
+        }
+        else if (isalnum(expr[i])) {
+            int j = 0;
+            while (isalnum(expr[i])) {
+                tokens[idx].value[j++] = expr[i++];
+            }
+            tokens[idx].value[j] = '\0';
+            tokens[idx].type = isdigit(tokens[idx].value[0]) ? TOKEN_NUMBER : TOKEN_VARIABLE;
+        }
+        else {
+            // skip unknown
+            i++;
+            continue;
+        }
+        idx++;
+    }
+    tokens[idx].type = TOKEN_END;
+    tokens[idx].value[0] = '\0';
+    *count = idx;
 }
 
-void parse_and_generate_tac(Token* tokens, int token_count) {
-    int temp_count = 1;
-    int i;
-    char left_side[20] = "";
-    int target_index = -1;
-    
-    // Find the position of the equals sign
-    for (i = 0; i < token_count; i++) {
-        if (tokens[i].type == TOKEN_EQUALS) {
-            target_index = i;
-            strcpy(left_side, tokens[i-1].value);
+// Return operator precedence
+static int precedence(char op) {
+    return (op == '*' || op == '/') ? 2 :
+           (op == '+' || op == '-') ? 1 : 0;
+}
+
+// Generate Three-Address Code respecting precedence
+static void generate_tac(Token *toks, int count) {
+    char target[32] = "";
+    int eq_pos = -1, temp_id = 1;
+
+    // locate '=' and LHS variable
+    for (int i = 0; i < count; i++) {
+        if (toks[i].type == TOKEN_EQUALS && i > 0) {
+            eq_pos = i;
+            strcpy(target, toks[i-1].value);
             break;
         }
     }
-    
-    if (target_index == -1) {
-        printf("Error: No assignment operator found\n");
+    if (eq_pos < 0) {
+        fprintf(stderr, "Error: no assignment operator\n");
         return;
     }
-    
-    // Start parsing from after the equals sign
-    i = target_index + 1;
-    
-    // We'll implement a simple expression parser that respects operator precedence
-    // First, let's handle multiplication and division
-    while (i < token_count) {
-        if (tokens[i].type == TOKEN_END) break;
-        
-        if (tokens[i].type == TOKEN_OPERATOR && 
-            (tokens[i].value[0] == '*' || tokens[i].value[0] == '/')) {
-            
-            // Generate TAC for multiplication or division
-            printf("t%d = %s %c %s\n", temp_count, tokens[i-1].value, 
-                  tokens[i].value[0], tokens[i+1].value);
-            
-            // Replace the expression with the temporary variable
-            strcpy(tokens[i-1].value, "");
-            sprintf(tokens[i-1].value, "t%d", temp_count);
-            
-            // Remove the operator and right operand
-            for (int j = i; j < token_count - 2; j++) {
-                tokens[j] = tokens[j+2];
+
+    // process ops by precedence: 2 then 1
+    for (int prec = 2; prec >= 1; prec--) {
+        for (int i = eq_pos + 1; i < count - 1; i++) {
+            if (toks[i].type == TOKEN_OPERATOR && precedence(toks[i].value[0]) == prec) {
+                printf("t%d = %s %c %s\n", temp_id,
+                       toks[i-1].value, toks[i].value[0], toks[i+1].value);
+
+                // replace left operand with temp
+                sprintf(toks[i-1].value, "t%d", temp_id);
+
+                // shift tokens left to remove op and right operand
+                memmove(&toks[i], &toks[i+2], sizeof(Token) * (count - i - 2));
+                count -= 2;
+                temp_id++;
+                i--; // re-evaluate at this position
             }
-            
-            token_count -= 2;
-            i -= 1; // Move back to process the temporary variable in next iteration
-            temp_count++;
-        } else {
-            i++;
         }
     }
-    
-    // Reset for addition and subtraction
-    i = target_index + 1;
-    
-    // Then handle addition and subtraction
-    while (i < token_count) {
-        if (tokens[i].type == TOKEN_END) break;
-        
-        if (tokens[i].type == TOKEN_OPERATOR && 
-            (tokens[i].value[0] == '+' || tokens[i].value[0] == '-')) {
-            
-            // Generate TAC for addition or subtraction
-            printf("t%d = %s %c %s\n", temp_count, tokens[i-1].value, 
-                  tokens[i].value[0], tokens[i+1].value);
-            
-            // Replace the expression with the temporary variable
-            strcpy(tokens[i-1].value, "");
-            sprintf(tokens[i-1].value, "t%d", temp_count);
-            
-            // Remove the operator and right operand
-            for (int j = i; j < token_count - 2; j++) {
-                tokens[j] = tokens[j+2];
-            }
-            
-            token_count -= 2;
-            i -= 1; // Move back to process the temporary variable in next iteration
-            temp_count++;
-        } else {
-            i++;
-        }
-    }
-    
-    // Final assignment
-    printf("%s = %s\n", left_side, tokens[target_index + 1].value);
+
+    // final assign
+    printf("%s = %s\n", target, toks[eq_pos + 1].value);
 }

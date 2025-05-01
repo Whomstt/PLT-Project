@@ -2,93 +2,77 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Define operator precedence levels
-#define LOW_PRECEDENCE 1
-#define HIGH_PRECEDENCE 2
+// Operator precedence levels
+typedef enum {
+    PREC_LOW = 1,   // +, -
+    PREC_HIGH = 2   // *, /
+} Precedence;
 
-// Function to return precedence of operators
-int precedence(char op) {
-    switch(op) {
-        case '+':
-        case '-':
-            return LOW_PRECEDENCE;  // Lower precedence for + and -
-        case '*':
-        case '/':
-            return HIGH_PRECEDENCE; // Higher precedence for * and /
-        default:
-            return -1; // Invalid operator
+// Return the precedence of an operator, or 0 if not an operator
+static Precedence get_precedence(char op) {
+    switch (op) {
+        case '+': case '-': return PREC_LOW;
+        case '*': case '/': return PREC_HIGH;
+        default:            return 0;
     }
 }
 
-// Function to check the operator precedence between two operators
-int compare_precedence(char op1, char op2) {
-    int p1 = precedence(op1);
-    int p2 = precedence(op2);
-
-    if (p1 > p2) {
-        return 1; // op1 has higher precedence
-    } else if (p1 < p2) {
-        return -1; // op2 has higher precedence
-    } else {
-        return 0; // Same precedence
-    }
+// Compare precedence of op1 vs op2
+// Returns >0 if op1 > op2, 0 if equal, <0 if op1 < op2
+static int compare_precedence(char op1, char op2) {
+    return get_precedence(op1) - get_precedence(op2);
 }
 
-// Function to parse the expression and apply operator precedence rules
-void operator_precedence_parser(char *expression) {
-    int i = 0;
-    char stack[100];  // Stack to store operators
-    int top = -1;     // Stack pointer
+// Parse an arithmetic expression (single-digit operands) and
+// demonstrate operator precedence using a stack
+void parse_with_precedence(const char *expr) {
+    char stack[100];    // operator stack
+    int top = -1;
 
-    printf("Parsing expression: %s\n", expression);
+    printf("Parsing expression: %s\n", expr);
 
-    while (expression[i] != '\0') {
-        char current = expression[i];
+    for (size_t i = 0; expr[i] != '\0'; ++i) {
+        char c = expr[i];
 
-        // If it's an operand (we assume single character operands for simplicity)
-        if ((current >= '0' && current <= '9')) {
-            printf("Operand: %c\n", current);
-            i++;
-        } 
-        // If it's an operator
-        else if (current == '+' || current == '-' || current == '*' || current == '/') {
-            printf("Operator: %c\n", current);
+        if (c >= '0' && c <= '9') {
+            // Operand
+            printf("Operand: %c\n", c);
+        }
+        else if (strchr("+-*/", c)) {
+            // Operator
+            printf("Operator: %c\n", c);
 
-            // While there's an operator on the stack with higher or equal precedence
-            while (top >= 0 && compare_precedence(stack[top], current) >= 0) {
-                printf("Popping operator: %c\n", stack[top]);
-                top--;
+            // Pop while top of stack has higher or equal precedence
+            while (top >= 0 && compare_precedence(stack[top], c) >= 0) {
+                printf("Popping operator: %c\n", stack[top--]);
             }
 
-            // Push the current operator onto the stack
-            stack[++top] = current;
-            i++;
-        } 
-        // Invalid character
+            // Push current operator
+            stack[++top] = c;
+        }
         else {
-            printf("Invalid character encountered: %c\n", current);
-            exit(1);
+            fprintf(stderr, "Error: Invalid character '%c' in expression\n", c);
+            exit(EXIT_FAILURE);
         }
     }
 
-    // Pop all remaining operators in the stack
+    // Pop remaining operators
     while (top >= 0) {
-        printf("Popping operator: %c\n", stack[top]);
-        top--;
+        printf("Popping operator: %c\n", stack[top--]);
     }
 
     printf("Parsing completed.\n");
 }
 
-int main() {
-    char expression[100];
+int main(void) {
+    char expr[101];
 
-    // Ask the user to enter the expression
     printf("Enter an arithmetic expression: ");
-    scanf("%s", expression);
+    if (scanf("%100s", expr) != 1) {
+        fprintf(stderr, "Failed to read expression.\n");
+        return EXIT_FAILURE;
+    }
 
-    // Call the operator precedence parser
-    operator_precedence_parser(expression);
-
-    return 0;
+    parse_with_precedence(expr);
+    return EXIT_SUCCESS;
 }

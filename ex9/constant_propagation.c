@@ -8,18 +8,48 @@
 #define MAX_LINE_LENGTH 256
 #define MAX_IDENTIFIER_LENGTH 64
 
+// Represents a variable or constant in the symbol table
 typedef struct {
     char name[MAX_IDENTIFIER_LENGTH];
     int value;
     bool is_constant;
 } Variable;
 
-// Global variables table
-Variable variables[MAX_VARIABLES];
-int var_count = 0;
+static Variable variables[MAX_VARIABLES];
+static int var_count = 0;
 
-// Function to find a variable in the table
-int find_variable(const char* name) {
+// Function prototypes
+int find_variable(const char *name);
+void set_variable(const char *name, int value, bool is_constant);
+bool evaluate_expression(const char *expr, int *result);
+void propagate_constants(const char *expr, char *result);
+void process_line(char *line);
+
+int main(void) {
+    char line[MAX_LINE_LENGTH];
+
+    printf("===== Constant Propagation Optimizer =====\n");
+    printf("Enter your code (empty line to finish):\n");
+
+    while (fgets(line, sizeof(line), stdin)) {
+        line[strcspn(line, "\n")] = '\0';  // remove newline
+        if (line[0] == '\0') break;
+        process_line(line);
+    }
+
+    printf("\n===== Variable Table After Optimization =====\n");
+    for (int i = 0; i < var_count; i++) {
+        printf("%s = %d (Constant: %s)\n",
+               variables[i].name,
+               variables[i].value,
+               variables[i].is_constant ? "Yes" : "No");
+    }
+
+    return 0;
+}
+
+// Find the index of a variable by name, or -1 if not found
+int find_variable(const char *name) {
     for (int i = 0; i < var_count; i++) {
         if (strcmp(variables[i].name, name) == 0) {
             return i;
@@ -28,297 +58,221 @@ int find_variable(const char* name) {
     return -1;
 }
 
-// Function to add or update a variable
-void set_variable(const char* name, int value, bool is_constant) {
-    int index = find_variable(name);
-    if (index == -1) {
-        // Variable doesn't exist, add it
+// Add a new variable or update an existing one
+void set_variable(const char *name, int value, bool is_constant) {
+    int idx = find_variable(name);
+    if (idx == -1) {
         if (var_count >= MAX_VARIABLES) {
             fprintf(stderr, "Error: Too many variables\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
-        strcpy(variables[var_count].name, name);
+        strncpy(variables[var_count].name, name, MAX_IDENTIFIER_LENGTH - 1);
         variables[var_count].value = value;
         variables[var_count].is_constant = is_constant;
         var_count++;
     } else {
-        // Update existing variable
-        variables[index].value = value;
-        variables[index].is_constant = is_constant;
+        variables[idx].value = value;
+        variables[idx].is_constant = is_constant;
     }
 }
 
-// Function to evaluate a simple expression
-bool evaluate_expression(const char* expr, int* result) {
-    // If the expression is just a number, return it directly
-    if (expr[0] && (isdigit(expr[0]) || (expr[0] == '-' && expr[1] && isdigit(expr[1])))) {
+// Evaluate an expression if all terms are constant; returns true if successful
+bool evaluate_expression(const char *expr, int *result) {
+    // Direct integer literal
+    if (expr[0] && (isdigit(expr[0]) || (expr[0] == '-' && isdigit(expr[1])))) {
         *result = atoi(expr);
         return true;
     }
-    
-    // Parse simple expressions like "x + 5", "10 - y", etc.
+
     char term1[MAX_IDENTIFIER_LENGTH] = {0};
     char term2[MAX_IDENTIFIER_LENGTH] = {0};
-    char operator = 0;
-    int value1, value2;
-    bool term1_is_constant = false;
-    bool term2_is_constant = false;
-    
-    // Extract terms and operator
-    int pos = 0;
-    int term_pos = 0;
-    
+    char op = 0;
+    int v1 = 0, v2 = 0;
+    bool c1 = false, c2 = false;
+    int pos = 0, tpos = 0;
+
     // Skip leading whitespace
     while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Parse first term
-    while (expr[pos] && !isspace(expr[pos]) && expr[pos] != '+' && expr[pos] != '-' && expr[pos] != '*' && expr[pos] != '/') {
-        term1[term_pos++] = expr[pos++];
+
+    // Read first term
+    while (expr[pos] && !isspace(expr[pos]) && strchr("+-*/,", expr[pos]) == NULL) {
+        term1[tpos++] = expr[pos++];
     }
-    term1[term_pos] = '\0';
-    
-    // Skip whitespace
+    term1[tpos] = '\0';
+
+    // Skip to operator
     while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Get operator
-    if (expr[pos] && (expr[pos] == '+' || expr[pos] == '-' || expr[pos] == '*' || expr[pos] == '/')) {
-        operator = expr[pos++];
+    if (strchr("+-*/", expr[pos])) {
+        op = expr[pos++];
     } else {
-        // Just a single term
+        // Single term (variable or literal)
         if (isdigit(term1[0]) || (term1[0] == '-' && isdigit(term1[1]))) {
             *result = atoi(term1);
             return true;
-        } else {
-            int var_index = find_variable(term1);
-            if (var_index != -1 && variables[var_index].is_constant) {
-                *result = variables[var_index].value;
-                return true;
-            }
-            return false;
         }
+        int idx = find_variable(term1);
+        if (idx >= 0 && variables[idx].is_constant) {
+            *result = variables[idx].value;
+            return true;
+        }
+        return false;
     }
-    
-    // Skip whitespace
+
+    // Read second term
     while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Parse second term
-    term_pos = 0;
-    while (expr[pos] && !isspace(expr[pos]) && expr[pos] != '+' && expr[pos] != '-' && expr[pos] != '*' && expr[pos] != '/') {
-        term2[term_pos++] = expr[pos++];
+    tpos = 0;
+    while (expr[pos] && !isspace(expr[pos]) && strchr("+-*/,", expr[pos]) == NULL) {
+        term2[tpos++] = expr[pos++];
     }
-    term2[term_pos] = '\0';
-    
-    // Evaluate first term
+    term2[tpos] = '\0';
+
+    // Resolve term1
     if (isdigit(term1[0]) || (term1[0] == '-' && isdigit(term1[1]))) {
-        value1 = atoi(term1);
-        term1_is_constant = true;
+        v1 = atoi(term1);
+        c1 = true;
     } else {
-        int var_index = find_variable(term1);
-        if (var_index != -1) {
-            value1 = variables[var_index].value;
-            term1_is_constant = variables[var_index].is_constant;
-        } else {
-            return false;  // Variable not found
-        }
+        int idx = find_variable(term1);
+        if (idx < 0) return false;
+        v1 = variables[idx].value;
+        c1 = variables[idx].is_constant;
     }
-    
-    // Evaluate second term
+
+    // Resolve term2
     if (isdigit(term2[0]) || (term2[0] == '-' && isdigit(term2[1]))) {
-        value2 = atoi(term2);
-        term2_is_constant = true;
+        v2 = atoi(term2);
+        c2 = true;
     } else {
-        int var_index = find_variable(term2);
-        if (var_index != -1) {
-            value2 = variables[var_index].value;
-            term2_is_constant = variables[var_index].is_constant;
-        } else {
-            return false;  // Variable not found
-        }
+        int idx = find_variable(term2);
+        if (idx < 0) return false;
+        v2 = variables[idx].value;
+        c2 = variables[idx].is_constant;
     }
-    
-    // Both terms must be constant to evaluate the expression
-    if (term1_is_constant && term2_is_constant) {
-        switch (operator) {
-            case '+': *result = value1 + value2; break;
-            case '-': *result = value1 - value2; break;
-            case '*': *result = value1 * value2; break;
+
+    if (c1 && c2) {
+        switch (op) {
+            case '+': *result = v1 + v2; break;
+            case '-': *result = v1 - v2; break;
+            case '*': *result = v1 * v2; break;
             case '/': 
-                if (value2 == 0) {
+                if (v2 == 0) {
                     fprintf(stderr, "Error: Division by zero\n");
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }
-                *result = value1 / value2; 
-                break;
-            default:
-                return false;  // Unknown operator
+                *result = v1 / v2; break;
+            default: return false;
         }
         return true;
     }
-    
-    return false;  // Not all terms are constant
+    return false;
 }
 
-// Function to perform constant propagation on an expression
-void propagate_constants(const char* expr, char* result) {
-    // Parse simple expressions like "x + 5", "10 - y", etc.
+// Replace constant variables in the expression with their values
+void propagate_constants(const char *expr, char *out) {
     char term1[MAX_IDENTIFIER_LENGTH] = {0};
     char term2[MAX_IDENTIFIER_LENGTH] = {0};
-    char operator = 0;
-    int value1, value2;
-    bool term1_is_constant = false;
-    bool term2_is_constant = false;
-    
-    // Extract terms and operator
-    int pos = 0;
-    int term_pos = 0;
-    
-    // Skip leading whitespace
-    while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Parse first term
-    while (expr[pos] && !isspace(expr[pos]) && expr[pos] != '+' && expr[pos] != '-' && expr[pos] != '*' && expr[pos] != '/') {
-        term1[term_pos++] = expr[pos++];
-    }
-    term1[term_pos] = '\0';
-    
+    char op = 0;
+    int pos = 0, tpos = 0;
+
     // Skip whitespace
     while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Get operator
-    if (expr[pos] && (expr[pos] == '+' || expr[pos] == '-' || expr[pos] == '*' || expr[pos] == '/')) {
-        operator = expr[pos++];
+
+    // First term
+    while (expr[pos] && !isspace(expr[pos]) && strchr("+-*/", expr[pos]) == NULL) {
+        term1[tpos++] = expr[pos++];
+    }
+    term1[tpos] = '\0';
+
+    // Operator
+    while (expr[pos] && isspace(expr[pos])) pos++;
+    if (strchr("+-*/", expr[pos])) {
+        op = expr[pos++];
     } else {
-        // Just a single term
+        // Single term propagation
         if (isdigit(term1[0]) || (term1[0] == '-' && isdigit(term1[1]))) {
-            strcpy(result, term1);
+            strcpy(out, term1);
         } else {
-            int var_index = find_variable(term1);
-            if (var_index != -1 && variables[var_index].is_constant) {
-                sprintf(result, "%d", variables[var_index].value);
+            int idx = find_variable(term1);
+            if (idx >= 0 && variables[idx].is_constant) {
+                sprintf(out, "%d", variables[idx].value);
             } else {
-                strcpy(result, term1);
+                strcpy(out, term1);
             }
         }
         return;
     }
-    
-    // Skip whitespace
+
+    // Second term
     while (expr[pos] && isspace(expr[pos])) pos++;
-    
-    // Parse second term
-    term_pos = 0;
-    while (expr[pos] && !isspace(expr[pos]) && expr[pos] != '+' && expr[pos] != '-' && expr[pos] != '*' && expr[pos] != '/') {
-        term2[term_pos++] = expr[pos++];
+    tpos = 0;
+    while (expr[pos] && !isspace(expr[pos]) && strchr("+-*/", expr[pos]) == NULL) {
+        term2[tpos++] = expr[pos++];
     }
-    term2[term_pos] = '\0';
-    
-    // Evaluate first term
-    char propagated_term1[MAX_IDENTIFIER_LENGTH];
+    term2[tpos] = '\0';
+
+    // Propagate term1
+    char p1[MAX_IDENTIFIER_LENGTH];
     if (isdigit(term1[0]) || (term1[0] == '-' && isdigit(term1[1]))) {
-        strcpy(propagated_term1, term1);
+        strcpy(p1, term1);
     } else {
-        int var_index = find_variable(term1);
-        if (var_index != -1 && variables[var_index].is_constant) {
-            sprintf(propagated_term1, "%d", variables[var_index].value);
+        int idx = find_variable(term1);
+        if (idx >= 0 && variables[idx].is_constant) {
+            sprintf(p1, "%d", variables[idx].value);
         } else {
-            strcpy(propagated_term1, term1);
+            strcpy(p1, term1);
         }
     }
-    
-    // Evaluate second term
-    char propagated_term2[MAX_IDENTIFIER_LENGTH];
+
+    // Propagate term2
+    char p2[MAX_IDENTIFIER_LENGTH];
     if (isdigit(term2[0]) || (term2[0] == '-' && isdigit(term2[1]))) {
-        strcpy(propagated_term2, term2);
+        strcpy(p2, term2);
     } else {
-        int var_index = find_variable(term2);
-        if (var_index != -1 && variables[var_index].is_constant) {
-            sprintf(propagated_term2, "%d", variables[var_index].value);
+        int idx = find_variable(term2);
+        if (idx >= 0 && variables[idx].is_constant) {
+            sprintf(p2, "%d", variables[idx].value);
         } else {
-            strcpy(propagated_term2, term2);
+            strcpy(p2, term2);
         }
     }
-    
-    // Combine the propagated terms
-    sprintf(result, "%s %c %s", propagated_term1, operator, propagated_term2);
+
+    sprintf(out, "%s %c %s", p1, op, p2);
 }
 
-// Function to process a single line of code
-void process_line(char* line) {
-    char variable[MAX_IDENTIFIER_LENGTH];
-    char expression[MAX_LINE_LENGTH];
-    char optimized_expr[MAX_LINE_LENGTH];
-    
-    // Parse assignment statement (format: "x = expr")
-    char* equals_pos = strchr(line, '=');
-    if (equals_pos) {
-        // Extract variable name
-        int var_len = equals_pos - line;
-        strncpy(variable, line, var_len);
-        variable[var_len] = '\0';
-        
-        // Trim whitespace
-        char* trimmed_var = variable;
-        while (isspace(*trimmed_var)) trimmed_var++;
-        char* end = trimmed_var + strlen(trimmed_var) - 1;
-        while (end > trimmed_var && isspace(*end)) *end-- = '\0';
-        
-        // Extract expression
-        char* expr_start = equals_pos + 1;
-        while (isspace(*expr_start)) expr_start++;
-        strcpy(expression, expr_start);
-        
-        // Trim whitespace from expression
-        char* trimmed_expr = expression;
-        while (isspace(*trimmed_expr)) trimmed_expr++;
-        end = trimmed_expr + strlen(trimmed_expr) - 1;
-        while (end > trimmed_expr && isspace(*end)) *end-- = '\0';
-        
-        // Show original line
-        printf("Original: %s = %s\n", trimmed_var, trimmed_expr);
-        
-        // Attempt constant propagation
-        propagate_constants(trimmed_expr, optimized_expr);
-        
-        // Check if expression can be evaluated
-        int result;
-        bool is_constant = evaluate_expression(trimmed_expr, &result);
-        
-        // Update the variable table
-        set_variable(trimmed_var, result, is_constant);
-        
-        // Output the optimized line
-        printf("Optimized: %s = %s\n\n", trimmed_var, optimized_expr);
-    } else {
-        // Not an assignment, just echo the line
+// Process a line of input: parse assignment, propagate constants, evaluate if possible
+void process_line(char *line) {
+    char var[MAX_IDENTIFIER_LENGTH];
+    char expr[MAX_LINE_LENGTH];
+    char opt_expr[MAX_LINE_LENGTH];
+
+    char *eq = strchr(line, '=');
+    if (!eq) {
         printf("%s\n", line);
+        return;
     }
-}
 
-int main() {
-    char line[MAX_LINE_LENGTH];
-    
-    printf("===== Constant Propagation Optimizer =====\n");
-    printf("Enter your code (empty line to finish):\n");
-    
-    while (fgets(line, sizeof(line), stdin)) {
-        // Remove newline character
-        line[strcspn(line, "\n")] = 0;
-        
-        // Break on empty line
-        if (strlen(line) == 0) {
-            break;
-        }
-        
-        process_line(line);
-    }
-    
-    printf("\n===== Variable Table After Optimization =====\n");
-    for (int i = 0; i < var_count; i++) {
-        printf("%s = %d (Constant: %s)\n", 
-               variables[i].name, 
-               variables[i].value, 
-               variables[i].is_constant ? "Yes" : "No");
-    }
-    
-    return 0;
+    // Extract variable name
+    int len = eq - line;
+    strncpy(var, line, len);
+    var[len] = '\0';
+    // Trim whitespace
+    char *vstart = var;
+    while (isspace(*vstart)) vstart++;
+    char *vend = vstart + strlen(vstart) - 1;
+    while (vend > vstart && isspace(*vend)) *vend-- = '\0';
+
+    // Extract expression
+    strcpy(expr, eq + 1);
+    char *estart = expr;
+    while (isspace(*estart)) estart++;
+    char *eend = estart + strlen(estart) - 1;
+    while (eend > estart && isspace(*eend)) *eend-- = '\0';
+
+    printf("Original: %s = %s\n", vstart, estart);
+
+    propagate_constants(estart, opt_expr);
+    int value = 0;
+    bool is_const = evaluate_expression(estart, &value);
+    set_variable(vstart, value, is_const);
+
+    printf("Optimized: %s = %s\n\n", vstart, opt_expr);
 }
