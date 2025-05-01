@@ -1,6 +1,7 @@
 %{
-#include "tac.tab.h"
+#include "parser_tac.tab.h"
 #include <string.h>
+#include <stdlib.h>
 %}
 
 %%
@@ -8,12 +9,11 @@
 "main"               { return MAIN; }
 "int"                { return INT; }
 
-[ \t\r\n]+           { /* skip whitespace */ }
+[ \t\r\n]+           { /* Skip whitespace */ }
 
-[0-9]+               {
-                        /* copy the digits into sval */
-                        yylval.sval = strdup(yytext);
-                        return NUM;
+[0-9]+               { 
+                        yylval.sval = strdup(yytext); 
+                        return NUM; 
                      }
 
 [a-zA-Z_][a-zA-Z0-9_]* {
@@ -33,7 +33,7 @@
 "{"                  { return LBRACE; }
 "}"                  { return RBRACE; }
 
-.                    { /* ignore any other single char */ }
+.                    { /* Ignore other single characters */ }
 
 %%
 

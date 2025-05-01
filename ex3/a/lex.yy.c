@@ -445,9 +445,10 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer_arith.l"
 #line 2 "lexer_arith.l"
-#include "arith.tab.h"
-#line 450 "lex.yy.c"
+#include "parser_arith.tab.h"
+#include <stdlib.h>
 #line 451 "lex.yy.c"
+#line 452 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -664,9 +665,10 @@ YY_DECL
 		}
 
 	{
-#line 4 "lexer_arith.l"
+#line 6 "lexer_arith.l"
 
-#line 670 "lex.yy.c"
+
+#line 672 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -725,61 +727,61 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 5 "lexer_arith.l"
+#line 8 "lexer_arith.l"
 { yylval.ival = atoi(yytext); return NUM; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 6 "lexer_arith.l"
+#line 9 "lexer_arith.l"
 { /* skip whitespace */ }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 7 "lexer_arith.l"
+#line 10 "lexer_arith.l"
 { return EOL; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 8 "lexer_arith.l"
+#line 11 "lexer_arith.l"
 { return PLUS; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 9 "lexer_arith.l"
+#line 12 "lexer_arith.l"
 { return MINUS; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 10 "lexer_arith.l"
+#line 13 "lexer_arith.l"
 { return MUL; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 11 "lexer_arith.l"
+#line 14 "lexer_arith.l"
 { return DIV; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 12 "lexer_arith.l"
+#line 15 "lexer_arith.l"
 { return LP; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 13 "lexer_arith.l"
+#line 16 "lexer_arith.l"
 { return RP; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 14 "lexer_arith.l"
-{ return yytext[0]; }
+#line 17 "lexer_arith.l"
+{ return yytext[0]; } /* return any unmatched character */
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 15 "lexer_arith.l"
+#line 18 "lexer_arith.l"
 ECHO;
 	YY_BREAK
-#line 783 "lex.yy.c"
+#line 785 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1784,6 +1786,10 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 15 "lexer_arith.l"
+#line 18 "lexer_arith.l"
 
+
+int yywrap(void) {
+  return 1;
+}
 

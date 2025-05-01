@@ -35,8 +35,8 @@
    especially those whose name start with YY_ or yy_.  They are
    private implementation details that can be changed or removed.  */
 
-#ifndef YY_YY_TAC_TAB_H_INCLUDED
-# define YY_YY_TAC_TAB_H_INCLUDED
+#ifndef YY_YY_PARSER_CALC_TAB_H_INCLUDED
+# define YY_YY_PARSER_CALC_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -54,21 +54,14 @@ extern int yydebug;
     YYEOF = 0,                     /* "end of file"  */
     YYerror = 256,                 /* error  */
     YYUNDEF = 257,                 /* "invalid token"  */
-    MAIN = 258,                    /* MAIN  */
-    INT = 259,                     /* INT  */
-    ID = 260,                      /* ID  */
-    NUM = 261,                     /* NUM  */
-    EQUAL = 262,                   /* EQUAL  */
-    PLUS = 263,                    /* PLUS  */
-    MINUS = 264,                   /* MINUS  */
-    MUL = 265,                     /* MUL  */
-    DIV = 266,                     /* DIV  */
-    SEMICOLON = 267,               /* SEMICOLON  */
-    COMMA = 268,                   /* COMMA  */
-    LP = 269,                      /* LP  */
-    RP = 270,                      /* RP  */
-    LBRACE = 271,                  /* LBRACE  */
-    RBRACE = 272                   /* RBRACE  */
+    NUM = 258,                     /* NUM  */
+    EOL = 259,                     /* EOL  */
+    LP = 260,                      /* LP  */
+    RP = 261,                      /* RP  */
+    PLUS = 262,                    /* PLUS  */
+    MINUS = 263,                   /* MINUS  */
+    MUL = 264,                     /* MUL  */
+    DIV = 265                      /* DIV  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -77,11 +70,11 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 30 "tac.y"
+#line 10 "parser_calc.y"
 
-    char *sval;
+    int ival;  /* Integer value */
 
-#line 85 "tac.tab.h"
+#line 78 "parser_calc.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -96,4 +89,4 @@ extern YYSTYPE yylval;
 int yyparse (void);
 
 
-#endif /* !YY_YY_TAC_TAB_H_INCLUDED  */
+#endif /* !YY_YY_PARSER_CALC_TAB_H_INCLUDED  */

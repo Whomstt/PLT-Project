@@ -458,10 +458,11 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer_tac.l"
 #line 2 "lexer_tac.l"
-#include "tac.tab.h"
+#include "parser_tac.tab.h"
 #include <string.h>
-#line 464 "lex.yy.c"
+#include <stdlib.h>
 #line 465 "lex.yy.c"
+#line 466 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -678,10 +679,10 @@ YY_DECL
 		}
 
 	{
-#line 6 "lexer_tac.l"
+#line 7 "lexer_tac.l"
 
 
-#line 685 "lex.yy.c"
+#line 686 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -740,27 +741,26 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 8 "lexer_tac.l"
+#line 9 "lexer_tac.l"
 { return MAIN; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 9 "lexer_tac.l"
+#line 10 "lexer_tac.l"
 { return INT; }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 11 "lexer_tac.l"
-{ /* skip whitespace */ }
+#line 12 "lexer_tac.l"
+{ /* Skip whitespace */ }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 13 "lexer_tac.l"
-{
-                        /* copy the digits into sval */
-                        yylval.sval = strdup(yytext);
-                        return NUM;
+#line 14 "lexer_tac.l"
+{ 
+                        yylval.sval = strdup(yytext); 
+                        return NUM; 
                      }
 	YY_BREAK
 case 5:
@@ -829,7 +829,7 @@ YY_RULE_SETUP
 case 17:
 YY_RULE_SETUP
 #line 36 "lexer_tac.l"
-{ /* ignore any other single char */ }
+{ /* Ignore other single characters */ }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP

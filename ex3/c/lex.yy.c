@@ -445,9 +445,10 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer_calc.l"
 #line 2 "lexer_calc.l"
-#include "calc.tab.h"  // Include the Bison header
-#line 450 "lex.yy.c"
+#include "parser_calc.tab.h"
+#include <stdlib.h>
 #line 451 "lex.yy.c"
+#line 452 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -664,10 +665,10 @@ YY_DECL
 		}
 
 	{
-#line 5 "lexer_calc.l"
+#line 6 "lexer_calc.l"
 
 
-#line 671 "lex.yy.c"
+#line 672 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -726,61 +727,61 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 7 "lexer_calc.l"
-{ yylval.ival = atoi(yytext); return NUM; }
+#line 8 "lexer_calc.l"
+{ yylval.ival = atoi(yytext); return NUM; }   /* Match numbers */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 8 "lexer_calc.l"
+#line 9 "lexer_calc.l"
 { return PLUS; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 9 "lexer_calc.l"
+#line 10 "lexer_calc.l"
 { return MINUS; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 10 "lexer_calc.l"
+#line 11 "lexer_calc.l"
 { return MUL; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 11 "lexer_calc.l"
+#line 12 "lexer_calc.l"
 { return DIV; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 12 "lexer_calc.l"
+#line 13 "lexer_calc.l"
 { return LP; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 13 "lexer_calc.l"
+#line 14 "lexer_calc.l"
 { return RP; }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 14 "lexer_calc.l"
-{ return EOL; }
+#line 15 "lexer_calc.l"
+{ return EOL; }                              /* Match newline */
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 15 "lexer_calc.l"
+#line 16 "lexer_calc.l"
 { /* Ignore whitespace */ }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 16 "lexer_calc.l"
-{ return yytext[0]; }
+#line 17 "lexer_calc.l"
+{ return yytext[0]; }                        /* Return unmatched characters */
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 18 "lexer_calc.l"
+#line 19 "lexer_calc.l"
 ECHO;
 	YY_BREAK
-#line 784 "lex.yy.c"
+#line 785 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1785,6 +1786,10 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 18 "lexer_calc.l"
+#line 19 "lexer_calc.l"
 
+
+int yywrap(void) {
+    return 1;
+}
 

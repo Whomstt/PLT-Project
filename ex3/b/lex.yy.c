@@ -440,11 +440,12 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer_id.l"
-#line 2 "lexer_id.l"
-#include "ident.tab.h"
-#line 447 "lex.yy.c"
+#line 1 "lexer_ident.l"
+#line 2 "lexer_ident.l"
+#include "parser_ident.tab.h"
+#include <stdlib.h>
 #line 448 "lex.yy.c"
+#line 449 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -661,9 +662,10 @@ YY_DECL
 		}
 
 	{
-#line 4 "lexer_id.l"
+#line 6 "lexer_ident.l"
 
-#line 667 "lex.yy.c"
+
+#line 669 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -722,31 +724,31 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 5 "lexer_id.l"
-{ return ID; }
+#line 8 "lexer_ident.l"
+{ return ID; }   /* Match identifiers */
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 6 "lexer_id.l"
-{ /* skip */ }
+#line 9 "lexer_ident.l"
+{ /* Skip whitespace */ }
 	YY_BREAK
 case 3:
 /* rule 3 can match eol */
 YY_RULE_SETUP
-#line 7 "lexer_id.l"
-{ return EOL; }
+#line 10 "lexer_ident.l"
+{ return EOL; }  /* Match newline as end-of-line */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 8 "lexer_id.l"
-{ return yytext[0]; }
+#line 11 "lexer_ident.l"
+{ return yytext[0]; } /* Match any unmatched character */
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 9 "lexer_id.l"
+#line 13 "lexer_ident.l"
 ECHO;
 	YY_BREAK
-#line 750 "lex.yy.c"
+#line 752 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1751,6 +1753,10 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 9 "lexer_id.l"
+#line 13 "lexer_ident.l"
 
+
+int yywrap(void) {
+  return 1;
+}
 

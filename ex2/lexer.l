@@ -23,7 +23,7 @@ WHITESPACE   [ \t\r\n]+
 {LITERAL}             { printf("%s Literal\n", yytext); }
 {ARITHMETIC_OPERATOR} { printf("%s Arithmetic Operator\n", yytext); }
 {SPECIAL_OPERATOR}    { printf("%s Special Operator\n", yytext); }
-{COMMENT}             { /* Ignore comments */ }
+{COMMENT}             { printf("%s Comment\n", yytext); }
 {WHITESPACE}          { /* Ignore whitespace */ }
 .                     { printf("%s Unknown character\n", yytext); }
 

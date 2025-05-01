@@ -3,19 +3,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* forward declarations so Bison knows about them */
-int yylex(void);
 void yyerror(const char *s);
+int yylex(void);
 
-/* counters and helper to make new temporaries */
+/* Helper functions for TAC generation */
 static int tempCount = 0, posCount = 0;
+
 static char *newTemp(void) {
     char buf[16];
     snprintf(buf, sizeof(buf), "t%d", tempCount++);
     return strdup(buf);
 }
 
-/* emit one TAC line */
 static void emit(const char *op, const char *a1, const char *a2, const char *res) {
     printf("%d %s %s %s %s\n",
            posCount++,
@@ -26,20 +25,15 @@ static void emit(const char *op, const char *a1, const char *a2, const char *res
 }
 %}
 
-/* semantic value is always a string (identifier, number, or temp) */
 %union {
     char *sval;
 }
 
-/* tokens */
 %token MAIN INT
 %token <sval> ID NUM
 %token EQUAL PLUS MINUS MUL DIV SEMICOLON COMMA LP RP LBRACE RBRACE
-
-/* declare the non‐terminals that carry sval */
 %type <sval> expr
 
-/* operator precedence */
 %left PLUS MINUS
 %left MUL DIV
 
@@ -64,7 +58,7 @@ id_list:
     ;
 
 stmts:
-      /* empty */ 
+      /* empty */
     | stmts stmt SEMICOLON
     ;
 

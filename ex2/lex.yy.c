@@ -808,7 +808,7 @@ case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
 #line 26 "lexer.l"
-{ /* Ignore comments */ }
+{ printf("%s Comment\n", yytext); }
 	YY_BREAK
 case 9:
 /* rule 9 can match eol */
