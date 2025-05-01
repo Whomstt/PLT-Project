@@ -19,27 +19,40 @@ char T[100], NT[100], G[100][100], STACK[100];
 int LL1[100][100];
 
 void main() {
-    int i, j, flag, fl, ch1;
-    char STR[100];
-    printf("Enter production rules of grammar in the form A->B\n\n");
-
-    // Predefined grammar for S->aA, A->b|c
-    strcpy(G[cr++], "S->aA");
-    strcpy(G[cr++], "A->b");
-    strcpy(G[cr++], "A->c");
-
-    NT[nt++] = 'S';  // Non-terminal symbols
-    NT[nt++] = 'A';
+    int i, j, flag;
+    char STR[100], temp[100];
     
-    T[t++] = 'a';    // Terminal symbols
-    T[t++] = 'b';
-    T[t++] = 'c';
+    printf("Enter the number of production rules: ");
+    scanf("%d", &cr); // cr is the count of production rules.
+    getchar(); // Consume newline character left by scanf.
+
+    printf("Enter production rules in the form A->B:\n");
+    for (i = 0; i < cr; i++) {
+        fgets(G[i], sizeof(G[i]), stdin); // Read each production rule.
+        G[i][strcspn(G[i], "\n")] = '\0'; // Remove trailing newline.
+    }
+
+    // Extract Non-Terminals and Terminals from the grammar
+    for (i = 0; i < cr; i++) {
+        char lhs = G[i][0];
+        if (strchr(NT, lhs) == NULL) {
+            NT[nt++] = lhs; // Add non-terminal to NT array
+        }
+        for (j = 3; G[i][j] != '\0'; j++) {
+            char ch = G[i][j];
+            if (!isupper(ch) && ch != '|' && ch != '!') {
+                if (strchr(T, ch) == NULL) {
+                    T[t++] = ch; // Add terminal to T array
+                }
+            }
+        }
+    }
+
+    T[t++] = '$'; // Add end-of-input marker
+    T[t] = '\0';
 
     FIRST_SHOW();
     FOLLOW_SHOW();
-
-    T[t++] = '$';
-    T[t] = '\0';
 
     flag = CREATE_LL1_TABLE();
     PARSING_TABLE_SHOW(flag);
@@ -50,6 +63,7 @@ void main() {
         LL1_PARSER(STR);
     }
 }
+
 
 void FIRST_SHOW() {
     int i, j;
